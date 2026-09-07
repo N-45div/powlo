@@ -1,9 +1,111 @@
 # powlo
 
-An agent that texts the other person for you.
+**An agent that texts the other person for you.**
+
+Every messaging agent talks to *you*. powlo talks to *them*.
 
 You text powlo what you want. It opens a **separate iMessage thread with the other
-party** — someone who has never heard of powlo, no app, no signup — works the
-conversation, and reports back into your thread on a live card that updates in place.
+party** — someone who has never heard of powlo, no app, no signup, no account — works
+the conversation on your behalf, and reports back into your thread on a card that
+updates in place.
 
-Built on [Photon Spectrum](https://photon.codes).
+```
+   you ──────► powlo ──────► your old landlord
+       iMessage        iMessage / SMS / RCS
+                              (never signed up for anything)
+```
+
+That second arrow is the whole product, and it is the one thing you cannot build
+anywhere else. Every other agent platform can only reach people who are already its
+users. Photon gives powlo a real line that starts conversations with strangers and
+falls back to SMS/RCS when they aren't on iMessage.
+
+---
+
+## What it actually does
+
+1. **Takes the brief.** Objective, the other party's number, and your floor — the
+   worst outcome you'd still accept. One question at a time, then it stops asking.
+2. **Opens the other thread.** A real DM to a real phone number. Its first message
+   always says it's an automated assistant acting for you — see [Disclosure](#disclosure).
+3. **Works the conversation.** Answers their questions, holds your position, never
+   asserts a fact you didn't give it.
+4. **Stops when it hits your limit.** An offer under your floor, a term you never
+   approved, a question only you can answer — powlo goes quiet with them and asks
+   you. It will not trade away something you didn't authorise.
+5. **Reports on a live card.** One bubble in your thread that rewrites itself as the
+   other side moves. Your thread never fills up with status updates.
+
+## Photon surface used
+
+| Primitive | Where |
+|---|---|
+| `im.space.create(user)` — open a DM with a number that never messaged you | [`src/channel.ts`](src/channel.ts) |
+| Two concurrent spaces, one agent, one unified transcript | [`src/index.ts`](src/index.ts) |
+| `app(url, {live:true})` + `edit()` — live card updated **in place** | [`src/channel.ts`](src/channel.ts) |
+| Screen effect (confetti) when a case closes | [`src/channel.ts`](src/channel.ts) |
+| Tapback acknowledgement on inbound messages | [`src/channel.ts`](src/channel.ts) |
+| `space.responding()` typing indicators on both threads | [`src/index.ts`](src/index.ts) |
+| SMS/RCS fallback — the other party needs no iMessage | automatic |
+| Terminal provider — the same agent, driven locally | [`src/channel.ts`](src/channel.ts) |
+
+The live card renders through Photon's App-Store-approved Spectrum launcher, so it
+needs no Apple developer account.
+
+## Disclosure
+
+powlo's opening message to the other party always states that it is an automated
+assistant texting on someone's behalf. This is enforced in the system prompt and is
+on by default (`POWLO_DISCLOSE=true`).
+
+An agent that texts strangers on your behalf and lets them believe it's a person is
+a worse product and, in several US states, an illegal one. powlo is more effective
+when it's straight about what it is — that's the part that makes people answer.
+
+## Run it
+
+### Locally, with no accounts at all
+
+```bash
+npm install
+npm run sim      # scripted brain, fake threads — proves the routing end to end
+```
+
+`npm run sim` needs no API key and no Photon project. It drives the real router with
+fake spaces so you can watch powlo take a brief, open the second thread, refuse an
+under-floor offer, escalate to you, and close.
+
+### On iMessage
+
+```bash
+cp .env.example .env      # fill in the four values
+npm start
+```
+
+| Variable | Where it comes from |
+|---|---|
+| `SPECTRUM_PROJECT_ID` / `SPECTRUM_PROJECT_SECRET` | [app.photon.codes](https://app.photon.codes) → project Settings |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| `POWLO_PUBLIC_URL` | a public HTTPS tunnel to `POWLO_PORT`, for the live card |
+
+**On the Free and Pro plans, every number powlo messages must be registered as a
+User on the project** (Dashboard → Users) — that includes the other party. Free
+allows 10, which is plenty for a two-party case. The Business plan uses a dedicated
+line and drops the allowlist entirely.
+
+If a send fails with `Target not allowed for this project`, that allowlist is why.
+[debug.photon.codes](https://debug.photon.codes) reports the exact handle Apple is
+sending your iMessage from, which is often not the number you'd expect.
+
+## Layout
+
+| File | Role |
+|---|---|
+| [`src/index.ts`](src/index.ts) | Routes each inbound message to the right side of the right case |
+| [`src/brain.ts`](src/brain.ts) | Intake, opening, negotiation, relay — each a strict-schema decision |
+| [`src/channel.ts`](src/channel.ts) | The only module that knows iMessage from terminal |
+| [`src/store.ts`](src/store.ts) | Durable cases, so a restart doesn't forget what powlo conceded |
+| [`src/web.ts`](src/web.ts) | The page behind the live card |
+| [`src/sim.ts`](src/sim.ts) / [`src/fake.ts`](src/fake.ts) | Offline end-to-end simulation |
+
+Built on [Photon Spectrum](https://photon.codes) with Claude Opus 5.
