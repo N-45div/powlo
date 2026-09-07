@@ -1,0 +1,23 @@
+{
+  "name": "powlo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An agent that texts the other person for you.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "local": "POWLO_CHANNEL=terminal tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "dotenv": "^17.2.3",
+    "spectrum-ts": "^12.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
