@@ -85,7 +85,7 @@ npm start
 | Variable | Where it comes from |
 |---|---|
 | `SPECTRUM_PROJECT_ID` / `SPECTRUM_PROJECT_SECRET` | [app.photon.codes](https://app.photon.codes) → project Settings |
-| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com) |
 | `POWLO_PUBLIC_URL` | a public HTTPS tunnel to `POWLO_PORT`, for the live card |
 
 **On the Free and Pro plans, every number powlo messages must be registered as a
@@ -108,4 +108,19 @@ sending your iMessage from, which is often not the number you'd expect.
 | [`src/web.ts`](src/web.ts) | The page behind the live card |
 | [`src/sim.ts`](src/sim.ts) / [`src/fake.ts`](src/fake.ts) | Offline end-to-end simulation |
 
-Built on [Photon Spectrum](https://photon.codes) with Claude Opus 5.
+## Models
+
+powlo splits the work across two tiers of GPT-5.6:
+
+| Call | Model | Why |
+|---|---|---|
+| intake, opening, relay | `gpt-5.6-luna` | conversational turns, cheap and fast |
+| **negotiation** | `gpt-5.6-terra` | the one decision that decides whether an offer breaches your floor |
+
+Override either with `POWLO_MODEL` / `POWLO_MODEL_NEGOTIATE`. Set both to
+`gpt-5.6-luna` to run the whole agent on one model.
+
+Every decision is a strict structured output via the Responses API, so the router
+never has to defend against a malformed reply.
+
+Built on [Photon Spectrum](https://photon.codes) with GPT-5.6.

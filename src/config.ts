@@ -10,8 +10,16 @@ export const config = {
   projectId: process.env.SPECTRUM_PROJECT_ID,
   projectSecret: process.env.SPECTRUM_PROJECT_SECRET,
 
-  anthropicKey: process.env.ANTHROPIC_API_KEY,
-  model: process.env.POWLO_MODEL ?? "claude-opus-5",
+  openaiKey: process.env.OPENAI_API_KEY,
+
+  /** Conversational turns: intake, the opening message, relaying your answer. */
+  model: process.env.POWLO_MODEL ?? "gpt-5.6-luna",
+  /**
+   * The one call that decides whether an offer breaches your floor. Set it to
+   * POWLO_MODEL if you'd rather run the whole agent on one model.
+   */
+  negotiationModel:
+    process.env.POWLO_MODEL_NEGOTIATE ?? process.env.POWLO_MODEL ?? "gpt-5.6-terra",
 
   port: Number(process.env.POWLO_PORT ?? 8787),
   publicUrl: (process.env.POWLO_PUBLIC_URL ?? "http://localhost:8787").replace(/\/$/, ""),
@@ -26,8 +34,8 @@ export const config = {
 };
 
 export function assertReady() {
-  if (!config.anthropicKey && !config.fakeBrain) {
-    throw new Error("ANTHROPIC_API_KEY is not set — copy .env.example to .env");
+  if (!config.openaiKey && !config.fakeBrain) {
+    throw new Error("OPENAI_API_KEY is not set — copy .env.example to .env");
   }
   if (config.channel === "imessage" && !(config.projectId && config.projectSecret)) {
     throw new Error(

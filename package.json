@@ -12,9 +12,10 @@
     "sim": "POWLO_FAKE_BRAIN=1 POWLO_STATE=.powlo/sim.json tsx src/sim.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.0",
     "dotenv": "^17.2.3",
-    "spectrum-ts": "^12.8.0"
+    "openai": "^7.10.0",
+    "spectrum-ts": "^12.8.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
