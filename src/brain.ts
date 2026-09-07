@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { config } from "./config.js";
 import type { Case, CaseStatus } from "./types.js";
+import { fakeIntake, fakeNegotiate, fakeOpening, fakeRelay } from "./fake.js";
 
 const client = new Anthropic({ apiKey: config.anthropicKey });
 
@@ -31,6 +32,13 @@ export interface IntakeDecision {
   floor?: string;
   headline?: string;
   readyToOpen: boolean;
+}
+
+/** What powlo sends back to the other side once the principal has answered. */
+export interface RelayDecision {
+  text: string;
+  /** A revised walk-away line, when the principal just authorised one. */
+  newFloor?: string;
 }
 
 /** What powlo decides after the other side texts it. */
@@ -101,6 +109,7 @@ const briefSoFar = (c: Case) =>
   ].join("\n");
 
 export function intake(c: Case, message: string): Promise<IntakeDecision> {
+  if (config.fakeBrain) return Promise.resolve(fakeIntake(c, message));
   return decide<IntakeDecision>({
     effort: "low",
     system: `${HOUSE_RULES}
@@ -151,6 +160,7 @@ ${briefSoFar(c)}`,
 }
 
 export function openingMessage(c: Case): Promise<{ text: string }> {
+  if (config.fakeBrain) return Promise.resolve(fakeOpening(c));
   const disclosure = config.disclose
     ? `
 
@@ -187,6 +197,7 @@ ${briefSoFar(c)}`,
 }
 
 export function negotiate(c: Case, message: string): Promise<NegotiationDecision> {
+  if (config.fakeBrain) return Promise.resolve(fakeNegotiate(c, message));
   const history = c.transcript
     .slice(-24)
     .map((t) => `[${t.side}/${t.who}] ${t.text}`)
@@ -251,19 +262,24 @@ ${history || "(this is their first reply)"}`,
 }
 
 /** Relay a principal's instruction mid-negotiation back into the other thread. */
-export function relay(c: Case, instruction: string): Promise<{ text: string }> {
+export function relay(c: Case, instruction: string): Promise<RelayDecision> {
+  if (config.fakeBrain) return Promise.resolve(fakeRelay(c, instruction));
   const history = c.transcript
     .slice(-16)
     .map((t) => `[${t.side}/${t.who}] ${t.text}`)
     .join("\n");
 
-  return decide<{ text: string }>({
+  return decide<RelayDecision>({
     effort: "low",
     system: `${HOUSE_RULES}
 
 You paused to ask your principal something. They have now answered. Turn their
 answer into the next message to the other party — in your voice, not theirs, and
 without quoting them.
+
+If their answer authorises a NEW walk-away line — "take 30k", "I'd accept 25" —
+record it in newFloor. That becomes the floor from now on; do not keep enforcing
+the old one.
 
 The brief:
 ${briefSoFar(c)}
@@ -275,7 +291,13 @@ ${history}`,
     toolDescription: "The next message to the other party.",
     schema: {
       type: "object",
-      properties: { text: { type: "string" } },
+      properties: {
+        text: { type: "string" },
+        newFloor: {
+          type: "string",
+          description: "Set only when the principal authorised a new walk-away line.",
+        },
+      },
       required: ["text"],
       additionalProperties: false,
     },

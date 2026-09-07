@@ -20,10 +20,13 @@ export const config = {
   disclose: bool(process.env.POWLO_DISCLOSE, true),
 
   stateFile: process.env.POWLO_STATE ?? ".powlo/cases.json",
+
+  /** Swap the model for scripted decisions, so the router can be tested offline. */
+  fakeBrain: bool(process.env.POWLO_FAKE_BRAIN, false),
 };
 
 export function assertReady() {
-  if (!config.anthropicKey) {
+  if (!config.anthropicKey && !config.fakeBrain) {
     throw new Error("ANTHROPIC_API_KEY is not set — copy .env.example to .env");
   }
   if (config.channel === "imessage" && !(config.projectId && config.projectSecret)) {

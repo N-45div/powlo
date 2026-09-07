@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { assertReady, config } from "./config.js";
 import { store } from "./store.js";
 import { intake, negotiate, openingMessage, relay } from "./brain.js";
@@ -5,8 +6,8 @@ import { ack, boot, celebrate, openWith, upsertCard, type App } from "./channel.
 import { caseUrl, startWeb } from "./web.js";
 import type { Case } from "./types.js";
 
-type AnySpace = { id: string; send: (c: unknown) => Promise<unknown>;
-                  responding: <T>(fn: () => Promise<T>) => Promise<T> };
+export type AnySpace = { id: string; send: (c: unknown) => Promise<unknown>;
+                         responding: <T>(fn: () => Promise<T>) => Promise<T> };
 
 /** Live handles that can't be serialised: space objects and the card message. */
 const live = new Map<string, { principal?: AnySpace; counterparty?: AnySpace; card?: unknown }>();
@@ -15,6 +16,14 @@ const handles = (id: string) => {
   if (!h) live.set(id, (h = {}));
   return h;
 };
+
+/** Bind already-open spaces to a case. Used on restart and by the simulator. */
+export function registerSpaces(
+  caseId: string,
+  spaces: { principal?: AnySpace; counterparty?: AnySpace },
+) {
+  Object.assign(handles(caseId), spaces);
+}
 
 async function counterpartySpace(app: App, c: Case): Promise<AnySpace | undefined> {
   const h = handles(c.id);
@@ -65,7 +74,7 @@ async function openTheThread(app: App, c: Case) {
   await refreshCard(c);
 }
 
-async function handlePrincipal(app: App, space: AnySpace, text: string, sender: string) {
+export async function handlePrincipal(app: App, space: AnySpace, text: string, sender: string) {
   let c = store.activeForPrincipal(sender);
   if (!c) c = store.create(sender, space.id);
 
@@ -78,7 +87,11 @@ async function handlePrincipal(app: App, space: AnySpace, text: string, sender: 
   if (c.status === "needs_you" && c.counterparty) {
     const them = await counterpartySpace(app, c);
     if (them) {
-      const { text: out } = await space.responding(() => relay(c!, text));
+      const r = await space.responding(() => relay(c!, text));
+      const out = r.text;
+      // A newly authorised floor replaces the old one, or powlo would keep
+      // escalating offers the principal has already accepted.
+      if (r.newFloor) c.floor = r.newFloor;
       await them.send(out);
       store.append(c, { side: "counterparty", who: "powlo", text: out });
       c.status = "negotiating";
@@ -106,7 +119,7 @@ async function handlePrincipal(app: App, space: AnySpace, text: string, sender: 
   if (d.readyToOpen && c.status === "gathering") await openTheThread(app, c);
 }
 
-async function handleCounterparty(c: Case, space: AnySpace, text: string) {
+export async function handleCounterparty(c: Case, space: AnySpace, text: string) {
   const h = handles(c.id);
   h.counterparty = space;
   store.append(c, { side: "counterparty", who: "them", text });
@@ -175,7 +188,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
-});
+// Only boot when run directly — the simulator imports the handlers above.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err instanceof Error ? err.message : err);
+    process.exit(1);
+  });
+}
