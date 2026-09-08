@@ -27,6 +27,9 @@ export const config = {
   /** powlo always tells the other side what it is. Non-negotiable by default. */
   disclose: bool(process.env.POWLO_DISCLOSE, true),
 
+  /** Shown to the principal when the other side has to text in first. */
+  lineNumber: process.env.POWLO_LINE ?? "+1 628 264-9335",
+
   stateFile: process.env.POWLO_STATE ?? ".powlo/cases.json",
 
   /** Swap the model for scripted decisions, so the router can be tested offline. */

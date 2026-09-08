@@ -66,12 +66,46 @@ async function openTheThread(app: App, c: Case) {
   }
 
   const { text } = await them.responding(() => openingMessage(c));
-  await them.send(text);
-  store.append(c, { side: "counterparty", who: "powlo", text });
 
+  try {
+    await them.send(text);
+  } catch (err) {
+    // Shared lines cannot open a thread with someone who has not texted first.
+    // Park the case rather than dropping it: the moment they do text in, the
+    // router matches their number to this case and the negotiation starts.
+    console.error("[powlo] cold open refused:", (err as Error).message);
+    c.status = "awaiting_contact";
+    c.headline = "Waiting for them to make contact";
+    store.save(c);
+    await refreshCard(c);
+    await h.principal?.send(
+      `I can't open a thread with ${c.counterpartyName ?? "them"} from this line — ` +
+        `they have to text it first. Ask them to text ${config.lineNumber}, ` +
+        `and I'll take it from there.`,
+    );
+    return;
+  }
+
+  store.append(c, { side: "counterparty", who: "powlo", text });
   c.status = "negotiating";
   store.save(c);
   await refreshCard(c);
+}
+
+/** They finally texted in on a case that was parked. Open with them now. */
+async function greetParkedCounterparty(c: Case, space: AnySpace) {
+  registerSpaces(c.id, { counterparty: space });
+  c.counterpartySpaceId = space.id;
+  const { text } = await space.responding(() => openingMessage(c));
+  await space.send(text);
+  store.append(c, { side: "counterparty", who: "powlo", text });
+  c.status = "negotiating";
+  c.headline = "Thread open with them";
+  store.save(c);
+  await refreshCard(c);
+  await handles(c.id).principal?.send(
+    `${c.counterpartyName ?? "They"} just made contact — I've opened with them.`,
+  );
 }
 
 export async function handlePrincipal(app: App, space: AnySpace, text: string, sender: string) {
@@ -177,7 +211,11 @@ async function main() {
 
       if (existing) {
         await ack(message);
-        await handleCounterparty(existing, space, text);
+        if (existing.status === "awaiting_contact") {
+          await greetParkedCounterparty(existing, space);
+        } else {
+          await handleCounterparty(existing, space, text);
+        }
       } else {
         await ack(message);
         await handlePrincipal(app, space, text, sender);

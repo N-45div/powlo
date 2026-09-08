@@ -1,6 +1,7 @@
 export type CaseStatus =
   | "gathering"    // powlo is still collecting the brief from the principal
   | "opening"      // brief is complete, powlo is about to open the other thread
+  | "awaiting_contact" // the line cannot cold-open; waiting for them to text in
   | "negotiating"  // the other side is talking
   | "needs_you"    // powlo hit a limit only the principal can authorise
   | "agreed"       // the other side committed to something

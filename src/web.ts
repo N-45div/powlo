@@ -6,6 +6,7 @@ import type { Case } from "./types.js";
 const STATUS_LABEL: Record<string, string> = {
   gathering: "Taking the brief",
   opening: "Opening the thread",
+  awaiting_contact: "Waiting for them to text in",
   negotiating: "In conversation",
   needs_you: "Waiting on you",
   agreed: "Agreed",
@@ -16,6 +17,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_TONE: Record<string, string> = {
   gathering: "muted",
   opening: "muted",
+  awaiting_contact: "warn",
   negotiating: "live",
   needs_you: "warn",
   agreed: "good",
