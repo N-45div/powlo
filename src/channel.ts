@@ -8,10 +8,15 @@ type AnySpace = { send: (...a: never[]) => unknown } & Record<string, unknown>;
 
 export async function boot(): Promise<App> {
   if (config.channel === "imessage") {
+    // The terminal provider is a local dev convenience — on a server it spawns
+    // a TUI binary that nothing can ever type into.
+    const providers = config.withTerminal
+      ? [imessage.config(), terminal.config()]
+      : [imessage.config()];
     return Spectrum({
       projectId: config.projectId!,
       projectSecret: config.projectSecret!,
-      providers: [imessage.config(), terminal.config()],
+      providers,
     });
   }
   // Terminal-only: no credentials, no Photon account, full loop.
