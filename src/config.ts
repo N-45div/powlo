@@ -21,7 +21,7 @@ export const config = {
   negotiationModel:
     process.env.POWLO_MODEL_NEGOTIATE ?? process.env.POWLO_MODEL ?? "gpt-5.6-terra",
 
-  port: Number(process.env.POWLO_PORT ?? 8787),
+  port: Number(process.env.PORT ?? process.env.POWLO_PORT ?? 8787),
   publicUrl: (process.env.POWLO_PUBLIC_URL ?? "http://localhost:8787").replace(/\/$/, ""),
 
   /** powlo always tells the other side what it is. Non-negotiable by default. */

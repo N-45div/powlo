@@ -108,6 +108,32 @@ If a send fails with `Target not allowed for this project`, that allowlist is wh
 [debug.photon.codes](https://debug.photon.codes) reports the exact handle Apple is
 sending your iMessage from, which is often not the number you'd expect.
 
+## Always-on deploy (Render)
+
+powlo holds a live connection to the Photon line, so it has to stay running to
+receive anything. `render.yaml` is a blueprint — point Render at this repo and it
+picks it up.
+
+Set these as environment variables in the Render dashboard (they are `sync: false`,
+so they are never committed):
+
+| Variable | Value |
+|---|---|
+| `OPENAI_API_KEY` | your key |
+| `SPECTRUM_PROJECT_ID` / `SPECTRUM_PROJECT_SECRET` | from app.photon.codes |
+| `POWLO_PUBLIC_URL` | the service's own URL, e.g. `https://powlo.onrender.com` |
+
+`POWLO_PUBLIC_URL` must match the deployed hostname — it is baked into the live
+card at send time, and a mismatch renders a dead card. Deploying also removes the
+need for a local tunnel entirely.
+
+**Plan matters.** Render's free tier sleeps after ~15 minutes idle; a sleeping
+powlo misses inbound texts. `starter` stays up. Free is fine for a demo you
+control the timing of, not for a line people actually text.
+
+State lives in `POWLO_STATE` (a JSON file). Without an attached disk it resets on
+each deploy, which loses in-flight cases but nothing else.
+
 ## Layout
 
 | File | Role |

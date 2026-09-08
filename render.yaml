@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: powlo
+    runtime: node
+    plan: starter          # free spins down after ~15min idle and misses texts
+    region: singapore
+    buildCommand: npm install
+    startCommand: npx tsx src/index.ts
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: POWLO_CHANNEL
+        value: imessage
+      - key: NODE_VERSION
+        value: "24"
+      # Render injects PORT; powlo reads it. The card URL must match the
+      # service's public hostname or the app card renders a dead link.
+      - key: POWLO_PUBLIC_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SPECTRUM_PROJECT_ID
+        sync: false
+      - key: SPECTRUM_PROJECT_SECRET
+        sync: false
