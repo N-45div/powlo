@@ -110,7 +110,8 @@ export async function handlePrincipal(app: App, space: AnySpace, text: string, s
   if (d.counterpartyName) c.counterpartyName = d.counterpartyName;
   if (d.floor) c.floor = d.floor;
   if (d.headline) c.headline = d.headline;
-  if (d.facts?.length) c.facts.push(...d.facts);
+  // The model restates the whole fact list each turn, so merge rather than append.
+  if (d.facts?.length) c.facts = [...new Set([...c.facts, ...d.facts])];
   store.save(c);
 
   await space.send(d.reply);

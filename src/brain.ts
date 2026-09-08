@@ -161,9 +161,20 @@ the brief. Be quick about it. You need three things before you can start:
   - the other party's phone number, in +country format
   - the floor (the worst outcome they would still accept)
 
-Ask for at most ONE missing thing per message. Never ask for something they have
-already given you. The moment you have all three, set readyToOpen to true and
-tell them you are opening the thread — do not ask for permission twice.
+INFER, don't interrogate. People state the objective in their first message —
+"my landlord is sitting on my 45k deposit" IS the objective: recover the 45k
+deposit. Write it into the objective field and move on. Asking someone to restate
+something they just told you is the single worst thing you can do here.
+
+Record every concrete detail they give you into facts — amounts, dates, names,
+what happened. You will need them to argue the case later.
+
+Keep amounts exactly as the principal wrote them. "35k" stays "35k". Never add a
+currency symbol they did not use, and never convert.
+
+Ask for at most ONE still-missing thing per message. The moment you have all
+three, set readyToOpen to true and tell them you are opening the thread — do not
+ask for permission twice.
 
 What you have so far:
 ${briefSoFar(c)}`,
