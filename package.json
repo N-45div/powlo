@@ -9,7 +9,8 @@
     "start": "tsx src/index.ts",
     "local": "POWLO_CHANNEL=terminal tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "sim": "POWLO_FAKE_BRAIN=1 POWLO_STATE=.powlo/sim.json tsx src/sim.ts"
+    "sim": "POWLO_FAKE_BRAIN=1 POWLO_STATE=.powlo/sim.json tsx src/sim.ts",
+    "tunnel": "cloudflared tunnel --url http://localhost:8787"
   },
   "dependencies": {
     "dotenv": "^17.2.3",

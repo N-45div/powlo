@@ -88,6 +88,17 @@ npm start
 | `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com) |
 | `POWLO_PUBLIC_URL` | a public HTTPS tunnel to `POWLO_PORT`, for the live card |
 
+**Use a Cloudflare quick tunnel, not ngrok.** ngrok's free tier serves an
+interstitial warning page to browser user-agents, which is what the iMessage card
+webview is — the card renders ngrok's warning instead of your case. Verified.
+
+```bash
+cloudflared tunnel --url http://localhost:8787   # npm run tunnel
+```
+
+Put the `https://….trycloudflare.com` URL it prints into `POWLO_PUBLIC_URL`, then
+start powlo. The tunnel must be up first — the card URL is baked in at send time.
+
 **On the Free and Pro plans, every number powlo messages must be registered as a
 User on the project** (Dashboard → Users) — that includes the other party. Free
 allows 10, which is plenty for a two-party case. The Business plan uses a dedicated
