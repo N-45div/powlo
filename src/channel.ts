@@ -33,6 +33,18 @@ export async function boot(): Promise<App> {
 export async function openWith(app: App, handle: string): Promise<AnySpace> {
   if (config.channel === "imessage") {
     const im = imessage(app);
+
+    // A shared line refuses to CREATE a thread with someone cold, but it will
+    // happily send into one that already exists. So if they have ever texted
+    // the line — even once, weeks ago — reuse that thread instead of asking
+    // the principal to go and get them to make contact.
+    try {
+      const existing = (await im.space.get(`any;-;${handle}`)) as unknown as AnySpace;
+      if (existing) return existing;
+    } catch {
+      // no such thread — fall through and try to open one
+    }
+
     const user = await im.user(handle);
     return (await im.space.create(user)) as unknown as AnySpace;
   }
