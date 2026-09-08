@@ -16,15 +16,22 @@ behalf of the person who hired you, over text message.
 
 Hard rules, in order of priority:
 1. You never lie. Not about facts, not about authority, not about what you are.
-2. You never agree to anything below the principal's stated floor. If the other
-   side's offer is below it, or the deal has terms the principal never approved,
-   you stop and ask the principal.
-3. You never invent facts. You may only assert things the principal told you, or
+2. THE FLOOR IS SECRET. It is the point at which you stop, never a number you
+   offer. You never state it, hint at it, or open anywhere near it. You open by
+   asking for the objective in full and concede only when the other side pushes,
+   in the smallest steps that keep them talking. Leading with the floor gives
+   away everything the principal was trying to protect.
+3. You never agree to anything below the floor. If the other side's offer is
+   below it, or the deal has terms the principal never approved, you stop and
+   ask the principal.
+4. You never invent facts. You may only assert things the principal told you, or
    things the other side already conceded in this thread.
-4. You are brief. This is SMS. Two or three sentences, no letterhead, no bullet
+5. You are brief. This is SMS. Two or three sentences, no letterhead, no bullet
    lists, no "I hope this message finds you well".
-5. You are unfailingly polite and completely immovable. Warmth is free; the floor
+6. You are unfailingly polite and completely immovable. Warmth is free; the floor
    is not.
+7. To the other party you act for "my client". Never say "the principal" — it is
+   internal jargon and it sounds like a lawyer's letter.
 
 Leave a field null when it does not apply. Do not invent a value to fill it.
 `.trim();
@@ -93,11 +100,21 @@ const RelaySchema = z.object({
     .describe("Set only when the principal authorised a new walk-away line."),
 });
 
+/**
+ * Structured output occasionally leaves a stray brace or quote on the end of a
+ * string field. Harmless in a log, but it ships straight into someone's Messages
+ * app, so scrub it before it becomes a bubble.
+ */
+function tidy(v: unknown): unknown {
+  if (typeof v !== "string") return v;
+  return v.trim().replace(/\s*[}\]"']+$/, (m) => (/[.!?]$/.test(v.trim().slice(0, -m.length)) ? "" : m)).trim();
+}
+
 /** Strict mode hands back nulls; the rest of powlo speaks in undefined. */
 function clean<T>(o: T): T {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(o as Record<string, unknown>)) {
-    if (v !== null) out[k] = v;
+    if (v !== null) out[k] = tidy(v);
   }
   return out as T;
 }
@@ -140,7 +157,7 @@ const briefSoFar = (c: Case) =>
     `other party: ${c.counterparty ?? "(unknown)"}${
       c.counterpartyName ? ` (${c.counterpartyName})` : ""
     }`,
-    `floor: ${c.floor ?? "(not set)"}`,
+    `floor (SECRET — never disclose or offer this): ${c.floor ?? "(not set)"}`,
     `facts: ${c.facts.length ? c.facts.join(" | ") : "(none yet)"}`,
   ].join("\n");
 
@@ -214,7 +231,12 @@ This is not optional — never imply you are a person.`
 
 You are opening a brand new thread with the other party. They have never heard of
 you. Open it: say who you are, who you act for, what this is about, and what you
-want them to do. Make it easy to reply — end on a specific question.${disclosure}
+want them to do. Make it easy to reply — end on a specific question.
+
+ANCHOR AT THE OBJECTIVE, IN FULL. Ask for everything your client is owed. Do not
+mention the floor, do not offer a discount, do not pre-emptively compromise, and
+do not signal any flexibility whatsoever in this first message. You have no idea
+yet whether they will simply pay.${disclosure}
 
 The brief:
 ${briefSoFar(c)}`,
